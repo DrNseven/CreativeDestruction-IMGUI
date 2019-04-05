@@ -15,16 +15,16 @@
 #endif
 
 //DX Includes
-//#include <DirectXMath.h>
-//using namespace DirectX;
+#include <DirectXMath.h>
+using namespace DirectX;
 
 //dx sdk if files are in ..\DXSDK dir
-#include "DXSDK\d3dx9.h"
-#if defined _M_X64
-#pragma comment(lib, "DXSDK/x64/d3dx9.lib") 
-#elif defined _M_IX86
-#pragma comment(lib, "DXSDK/x86/d3dx9.lib")
-#endif
+//#include "DXSDK\d3dx9.h"
+//#if defined _M_X64
+//#pragma comment(lib, "DXSDK/x64/d3dx9.lib") 
+//#elif defined _M_IX86
+//#pragma comment(lib, "DXSDK/x86/d3dx9.lib")
+//#endif
 
 #pragma warning (disable: 4244) 
 
@@ -122,7 +122,7 @@ void Log(const char *fmt, ...)
 	if (logfile.is_open() && text)	logfile << text << endl;
 	logfile.close();
 }
-
+/*
 DWORD QuickChecksum(DWORD *pData, int size)
 {
 	if (!pData) { return 0x0; }
@@ -141,14 +141,14 @@ DWORD QuickChecksum(DWORD *pData, int size)
 
 	return sum;
 }
-
+*/
 // The main window handle of the game.
 //HWND game_hwnd = FindWindowA(0, "Deadpool");
 //HWND game_hwnd = FindWindowA(0, "Star Wars Battlefront II");
 
 // The main window handle of the game.
 HWND game_hwnd = NULL;
-
+/*
 // Used to find windows belonging to the game process.
 BOOL CALLBACK find_game_hwnd(HWND hwnd, LPARAM game_pid) {
 	// Skip windows not belonging to the game process.
@@ -164,7 +164,7 @@ BOOL CALLBACK find_game_hwnd(HWND hwnd, LPARAM game_pid) {
 
 	return FALSE;
 }
-
+*/
 const char *VariableText(const char *format, ...) {
 	va_list argptr;
 	va_start(argptr, format);
@@ -194,6 +194,24 @@ std::vector<ModelEspInfo_t>ModelEspInfo;
 
 void AddModels(LPDIRECT3DDEVICE9 Device, UINT sr)
 {
+	DirectX::XMMATRIX matrix;
+	DirectX::XMVECTOR Pos = XMVectorSet(0.0f, (float)aimheight, (float)preaim, 0.0f);
+	Device->GetVertexShaderConstantF(sr, (float*)&matrix, 4);
+
+	float mx = Pos.m128_f32[0] * matrix.r[0].m128_f32[0] + Pos.m128_f32[1] * matrix.r[1].m128_f32[0] + Pos.m128_f32[2] * matrix.r[2].m128_f32[0] + matrix.r[3].m128_f32[0];
+	float my = Pos.m128_f32[0] * matrix.r[0].m128_f32[1] + Pos.m128_f32[1] * matrix.r[1].m128_f32[1] + Pos.m128_f32[2] * matrix.r[2].m128_f32[1] + matrix.r[3].m128_f32[1];
+	float mz = Pos.m128_f32[0] * matrix.r[0].m128_f32[2] + Pos.m128_f32[1] * matrix.r[1].m128_f32[2] + Pos.m128_f32[2] * matrix.r[2].m128_f32[2] + matrix.r[3].m128_f32[2];
+	float mw = Pos.m128_f32[0] * matrix.r[0].m128_f32[3] + Pos.m128_f32[1] * matrix.r[1].m128_f32[3] + Pos.m128_f32[2] * matrix.r[2].m128_f32[3] + matrix.r[3].m128_f32[3];
+
+	float xx, yy;
+	xx = ((mx / mw) * (ViewportWidth / 2.0f)) + (ViewportWidth / 2.0f);
+	yy = (ViewportHeight / 2.0f) - ((my / mw) * (ViewportHeight / 2.0f));
+
+	ModelEspInfo_t pModelEspInfo;
+	pModelEspInfo = { static_cast<float>(xx), static_cast<float>(yy), static_cast<float>(mw*0.4f) };
+	ModelEspInfo.push_back(pModelEspInfo);
+
+	/*
 	D3DXMATRIX matrix;
 	D3DXVECTOR4 position;
 	D3DXVECTOR4 input;
@@ -218,20 +236,6 @@ void AddModels(LPDIRECT3DDEVICE9 Device, UINT sr)
 
 	ModelEspInfo_t pModelEspInfo;
 	pModelEspInfo = { static_cast<float>(xx), static_cast<float>(yy), static_cast<float>(position.w*0.4f) };
-	ModelEspInfo.push_back(pModelEspInfo);
-
-	/*
-	D3DXMATRIX matrix;
-	Device->GetVertexShaderConstantF(189, matrix, 4);//189
-
-	D3DXVECTOR3 pOut, pIn(0.0f, (float)aimheight, (float)preaim);
-	float distance = pIn.x * matrix._14 + pIn.y * matrix._24 + pIn.z * matrix._34 + matrix._44;
-	D3DXVec3TransformCoord(&pOut, &pIn, &matrix);
-
-	pOut.x = (1.0f + pOut.x) *Viewport.Width / 1;
-	pOut.y = (1.0f - pOut.y) *Viewport.Height / 2;
-
-	ModelEspInfo_t pModelEspInfo = { static_cast<float>(pOut.x), static_cast<float>(pOut.y), static_cast<float>(distance) };
 	ModelEspInfo.push_back(pModelEspInfo);
 	*/
 }

@@ -128,24 +128,17 @@ HRESULT APIENTRY DrawIndexedPrimitive_hook(IDirect3DDevice9* pDevice, D3DPRIMITI
 
 //==========================================================================================================================
 
-HRESULT APIENTRY DrawPrimitive_hook(IDirect3DDevice9* pDevice, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount)
+HRESULT APIENTRY Present_hook(IDirect3DDevice9* pDevice, const RECT *pSourceRect, const RECT *pDestRect, HWND hDestWindowOverride, const RGNDATA *pDirtyRegion)
 {
-	return DrawPrimitive_orig(pDevice, PrimitiveType, StartVertex, PrimitiveCount);
-}
-
-//=====================================================================================================================
-
-HRESULT APIENTRY EndScene_hook(IDirect3DDevice9* pDevice)
-{
-	if (pDevice == nullptr) return EndScene_orig(pDevice);
+	if (pDevice == nullptr) return Present_orig(pDevice, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 
 	if (!is_imgui_initialised)
 	{
 		//generate texture
-		GenerateTexture(pDevice, &Red, D3DCOLOR_ARGB(255, 255, 0, 0));
-		GenerateTexture(pDevice, &Green, D3DCOLOR_RGBA(0, 255, 0, 255));
-		GenerateTexture(pDevice, &Blue, D3DCOLOR_ARGB(255, 0, 0, 255));
-		GenerateTexture(pDevice, &Yellow, D3DCOLOR_ARGB(255, 255, 255, 0));
+		//GenerateTexture(pDevice, &Red, D3DCOLOR_ARGB(255, 255, 0, 0));
+		//GenerateTexture(pDevice, &Green, D3DCOLOR_RGBA(0, 255, 0, 255));
+		//GenerateTexture(pDevice, &Blue, D3DCOLOR_ARGB(255, 0, 0, 255));
+		//GenerateTexture(pDevice, &Yellow, D3DCOLOR_ARGB(255, 255, 255, 0));
 
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
@@ -200,7 +193,7 @@ HRESULT APIENTRY EndScene_hook(IDirect3DDevice9* pDevice)
 		ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.2f, 0.2f, 0.2f, 0.8f));
 
 		ImGui::Begin("title", &info, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
-		ImGui::Text("Press INSERT for menu, ESC & MOUSE or TAB + ARROWS to navigate ");
+		ImGui::Text("Press INSERT for menu, ESC & MOUSE or TAB + ARROWS + SPACE to navigate ");
 		ImGui::End();
 
 		static DWORD lastTime = timeGetTime();
@@ -264,7 +257,7 @@ HRESULT APIENTRY EndScene_hook(IDirect3DDevice9* pDevice)
 		ImGui::Text("Line Esp");
 		ImGui::SameLine();
 		ImGui::Combo("##LineEsp", (int*)&lineesp, lineesp_Options, IM_ARRAYSIZE(lineesp_Options));
-		
+
 		ImGui::Checkbox("Aimbot", &aimbot);
 		//ImGui::SliderInt("Aim Key", &aimkey, 0, 8);
 
@@ -295,35 +288,35 @@ HRESULT APIENTRY EndScene_hook(IDirect3DDevice9* pDevice)
 	if (aimkey == 8) Daimkey = 0x43; //C
 
 	//do esp
-	if(distanceesp||circleesp||lineesp>0)
+	if (distanceesp || circleesp || lineesp > 0)
 	{
 		ImGui::Begin("Transparent", reinterpret_cast<bool*>(true), ImVec2(0, 0), 0.0f, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::SetWindowPos(ImVec2(0, 0), ImGuiCond_Always);
 		ImGui::SetWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y), ImGuiCond_Always);
-		
+
 		if (ModelEspInfo.size() != NULL)
 		{
 			for (unsigned int i = 0; i < ModelEspInfo.size(); i++)
 			{
-				if (ModelEspInfo[i].pOutX > 1.0f && ModelEspInfo[i].pOutY > 1.0f && ModelEspInfo[i].RealDistance > 12.0f)
+				if (ModelEspInfo[i].pOutX > 1.0f && ModelEspInfo[i].pOutY > 1.0f && ModelEspInfo[i].RealDistance > 13.0f)
 				{
 					//draw cricle
 					if (circleesp)
-					ImGui::GetWindowDrawList()->AddCircle(ImVec2(ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY), 4000 / ModelEspInfo[i].RealDistance, IM_COL32(255, 255, 255, 255), 12, 2.0f); //scale with distance
+						ImGui::GetWindowDrawList()->AddCircle(ImVec2(ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY), 4000 / ModelEspInfo[i].RealDistance, IM_COL32(255, 255, 255, 255), 12, 2.0f); //scale with distance
 
-					//draw line
-					if(lineesp==0)
-						ImGui::GetWindowDrawList()->AddLine({ ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY }, ImVec2(io.DisplaySize.x/2, io.DisplaySize.y/2 * (0)), IM_COL32(255, 255, 255, 255), 1.0f);//0up, 10middle, 20down
-					else if (lineesp==1)
+						//draw line
+					if (lineesp == 0)
+						ImGui::GetWindowDrawList()->AddLine({ ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY }, ImVec2(io.DisplaySize.x / 2, io.DisplaySize.y / 2 * (0)), IM_COL32(255, 255, 255, 255), 1.0f);//0up, 10middle, 20down
+					else if (lineesp == 1)
 						ImGui::GetWindowDrawList()->AddLine({ ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY }, ImVec2(io.DisplaySize.x / 2, io.DisplaySize.y / 2 * (1)), IM_COL32(255, 255, 255, 255), 1.0f);//0up, 10middle, 20down
-					else if(lineesp==2)
+					else if (lineesp == 2)
 						ImGui::GetWindowDrawList()->AddLine({ ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY }, ImVec2(io.DisplaySize.x / 2, io.DisplaySize.y / 2 * (2)), IM_COL32(255, 255, 255, 255), 1.0f);//0up, 10middle, 20down
-					
+
 					//draw text
-					if(distanceesp)
+					if (distanceesp)
 					{
 						//ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize(), ImVec2(ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY), ImColor(255, 255, 0, 255), "Model", 0, 0.0f, 0); //draw text
-						if(ModelEspInfo[i].RealDistance > 12.0f && ModelEspInfo[i].RealDistance < 200.0f)
+						if (ModelEspInfo[i].RealDistance > 12.0f && ModelEspInfo[i].RealDistance < 200.0f)
 							ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize(), ImVec2(ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY), ImColor(255, 255, 0, 255), VariableText("%.f", ModelEspInfo[i].RealDistance), 0, 0.0f, 0); //draw variable
 						else if (ModelEspInfo[i].RealDistance > 200.0f && ModelEspInfo[i].RealDistance < 1000.0f)
 							ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize(), ImVec2(ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY), ImColor(255, 255, 255, 255), VariableText("%.f", ModelEspInfo[i].RealDistance), 0, 0.0f, 0); //draw variable
@@ -338,62 +331,62 @@ HRESULT APIENTRY EndScene_hook(IDirect3DDevice9* pDevice)
 
 	//do aim
 	if (aimbot)
-	if (ModelEspInfo.size() != NULL)
-	{
-		UINT BestTarget = -1;
-		DOUBLE fClosestPos = 99999;
-
-		for (unsigned int i = 0; i < ModelEspInfo.size(); i++)
+		if (ModelEspInfo.size() != NULL)
 		{
-			//aimfov
-			float radiusx = (aimfov*5.0f) * (ScreenCX / 100.0f);
-			float radiusy = (aimfov*5.0f) * (ScreenCY / 100.0f);
+			UINT BestTarget = -1;
+			DOUBLE fClosestPos = 99999;
 
-			if (aimfov == 0)
+			for (unsigned int i = 0; i < ModelEspInfo.size(); i++)
 			{
-				radiusx = 5.0f * (ScreenCX / 100.0f);
-				radiusy = 5.0f * (ScreenCY / 100.0f);
+				//aimfov
+				float radiusx = (aimfov*5.0f) * (ScreenCX / 100.0f);
+				float radiusy = (aimfov*5.0f) * (ScreenCY / 100.0f);
+
+				if (aimfov == 0)
+				{
+					radiusx = 5.0f * (ScreenCX / 100.0f);
+					radiusy = 5.0f * (ScreenCY / 100.0f);
+				}
+
+				//get crosshairdistance
+				ModelEspInfo[i].CrosshairDistance = GetDistance(ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY, ScreenCX, ScreenCY);
+
+				//if in fov
+				if (ModelEspInfo[i].pOutX >= ScreenCX - radiusx && ModelEspInfo[i].pOutX <= ScreenCX + radiusx && ModelEspInfo[i].pOutY >= ScreenCY - radiusy && ModelEspInfo[i].pOutY <= ScreenCY + radiusy)
+
+					//get closest/nearest target to crosshair
+					if (ModelEspInfo[i].CrosshairDistance < fClosestPos)
+					{
+						fClosestPos = ModelEspInfo[i].CrosshairDistance;
+						BestTarget = i;
+					}
 			}
 
-			//get crosshairdistance
-			ModelEspInfo[i].CrosshairDistance = GetDistance(ModelEspInfo[i].pOutX, ModelEspInfo[i].pOutY, ScreenCX, ScreenCY);
 
-			//if in fov
-			if (ModelEspInfo[i].pOutX >= ScreenCX - radiusx && ModelEspInfo[i].pOutX <= ScreenCX + radiusx && ModelEspInfo[i].pOutY >= ScreenCY - radiusy && ModelEspInfo[i].pOutY <= ScreenCY + radiusy)
-
-				//get closest/nearest target to crosshair
-				if (ModelEspInfo[i].CrosshairDistance < fClosestPos)
-				{
-					fClosestPos = ModelEspInfo[i].CrosshairDistance;
-					BestTarget = i;
-				}
-		}
-
-
-		//if nearest target to crosshair
-		if (BestTarget != -1 && ModelEspInfo[BestTarget].RealDistance > 12.0f)
-		{
-			double DistX = ModelEspInfo[BestTarget].pOutX - ScreenCX;
-			double DistY = ModelEspInfo[BestTarget].pOutY - ScreenCY;
-
-			DistX /= (float)aimsens;
-			DistY /= (float)aimsens;
-
-			//aim
-			if (GetKeyState(Daimkey) & 0x8000)
-				mouse_event(MOUSEEVENTF_MOVE, (float)DistX, (float)DistY, 0, NULL);
-
-			//autoshoot on
-			if ((!GetAsyncKeyState(VK_LBUTTON) && (autoshoot == 1) && (GetAsyncKeyState(Daimkey) & 0x8000)))
+			//if nearest target to crosshair
+			if (BestTarget != -1 && ModelEspInfo[BestTarget].RealDistance > 12.0f)
 			{
-				if (autoshoot == 1 && !IsPressed)
+				double DistX = ModelEspInfo[BestTarget].pOutX - ScreenCX;
+				double DistY = ModelEspInfo[BestTarget].pOutY - ScreenCY;
+
+				DistX /= (float)aimsens;
+				DistY /= (float)aimsens;
+
+				//aim
+				if (GetKeyState(Daimkey) & 0x8000)
+					mouse_event(MOUSEEVENTF_MOVE, (float)DistX, (float)DistY, 0, NULL);
+
+				//autoshoot on
+				if ((!GetAsyncKeyState(VK_LBUTTON) && (autoshoot == 1) && (GetAsyncKeyState(Daimkey) & 0x8000)))
 				{
-					IsPressed = true;
-					mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+					if (autoshoot == 1 && !IsPressed)
+					{
+						IsPressed = true;
+						mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+					}
 				}
 			}
 		}
-	}
 	//if(esp||aimbot)
 	ModelEspInfo.clear();
 
@@ -413,7 +406,7 @@ HRESULT APIENTRY EndScene_hook(IDirect3DDevice9* pDevice)
 	ImGui::Render();
 	ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 
-	return EndScene_orig(pDevice);
+	return Present_orig(pDevice, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 }
 
 //==========================================================================================================================
@@ -427,6 +420,20 @@ HRESULT APIENTRY Reset_hook(IDirect3DDevice9* pDevice, D3DPRESENT_PARAMETERS *pP
 	ImGui_ImplDX9_CreateDeviceObjects();
 
 	return ResetReturn;
+}
+
+//=====================================================================================================================
+
+HRESULT APIENTRY DrawPrimitive_hook(IDirect3DDevice9* pDevice, D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount)
+{
+	return DrawPrimitive_orig(pDevice, PrimitiveType, StartVertex, PrimitiveCount);
+}
+
+//=====================================================================================================================
+
+HRESULT APIENTRY EndScene_hook(IDirect3DDevice9* pDevice)
+{
+	return EndScene_orig(pDevice);
 }
 
 //==========================================================================================================================
@@ -523,14 +530,7 @@ out:
 
 //==========================================================================================================================
 
-HRESULT APIENTRY Present_hook(IDirect3DDevice9* pDevice, const RECT *pSourceRect, const RECT *pDestRect, HWND hDestWindowOverride, const RGNDATA *pDirtyRegion)
-{
-	return Present_orig(pDevice, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
-}
-
-//=====================================================================================================================
-
-DWORD WINAPI D3Dimgui(LPVOID lpParameter)
+DWORD WINAPI CDimgui(LPVOID lpParameter)
 {
 	while (!GetModuleHandleA("d3d9.dll")) {
 		Sleep(200);
@@ -614,8 +614,8 @@ DWORD WINAPI D3Dimgui(LPVOID lpParameter)
 	DetourAttach(&(LPVOID&)DrawIndexedPrimitive_orig, (PBYTE)DrawIndexedPrimitive_hook);
 	//DetourAttach(&(LPVOID&)DrawPrimitive_orig, (PBYTE)DrawPrimitive_hook);
 	//DetourAttach(&(LPVOID&)SetTexture_orig, (PBYTE)SetTexture_hook);
-	//DetourAttach(&(LPVOID&)Present_orig, (PBYTE)Present_hook);
-	DetourAttach(&(LPVOID&)EndScene_orig, (PBYTE)EndScene_hook);
+	DetourAttach(&(LPVOID&)Present_orig, (PBYTE)Present_hook);
+	//DetourAttach(&(LPVOID&)EndScene_orig, (PBYTE)EndScene_hook);
 	DetourAttach(&(LPVOID&)Reset_orig, (PBYTE)Reset_hook);
 	DetourTransactionCommit();
 	
@@ -646,7 +646,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				break;
 			}
 		}
-		CreateThread(0, 0, D3Dimgui, 0, 0, 0); //init our hooks
+		CreateThread(0, 0, CDimgui, 0, 0, 0); //init our hooks
 
 		break;
 	case DLL_PROCESS_DETACH:

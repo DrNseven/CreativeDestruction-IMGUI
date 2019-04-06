@@ -6,6 +6,11 @@
 #pragma comment(lib, "d3d9.lib")
 #pragma comment(lib, "winmm.lib")//time
 
+//imgui
+#include "imgui\imgui.h"
+#include "imgui\imgui_impl_dx9.h"
+#include "imgui\imgui_impl_win32.h"
+
 //detours
 #include "detours.X86\detours.h"
 #if defined _M_X64
@@ -15,16 +20,8 @@
 #endif
 
 //DX Includes
-#include <DirectXMath.h>
-using namespace DirectX;
-
-//dx sdk if files are in ..\DXSDK dir
-//#include "DXSDK\d3dx9.h"
-//#if defined _M_X64
-//#pragma comment(lib, "DXSDK/x64/d3dx9.lib") 
-//#elif defined _M_IX86
-//#pragma comment(lib, "DXSDK/x86/d3dx9.lib")
-//#endif
+//#include <DirectXMath.h>
+//using namespace DirectX;
 
 #pragma warning (disable: 4244) 
 
@@ -192,8 +189,36 @@ struct ModelEspInfo_t
 };
 std::vector<ModelEspInfo_t>ModelEspInfo;
 
+struct vec2
+{ float x, y; };
+
+struct vec3
+{ float x, y, z; };
+
+struct vec4
+{ float x, y, z, w; };
+
 void AddModels(LPDIRECT3DDEVICE9 Device, UINT sr)
 {
+	vec4 pos { 0.0f, (float)aimheight, (float)preaim, 0.0f };
+	vec4 vOut;
+	float matrix[16];
+
+	Device->GetVertexShaderConstantF(sr, matrix, 4);
+
+	vOut.x = pos.x * matrix[0] + pos.y * matrix[4] + pos.z * matrix[8] + matrix[12];
+	vOut.y = pos.x * matrix[1] + pos.y * matrix[5] + pos.z * matrix[9] + matrix[13];
+	vOut.z = pos.x * matrix[2] + pos.y * matrix[6] + pos.z * matrix[10] + matrix[14];
+	vOut.w = pos.x * matrix[3] + pos.y * matrix[7] + pos.z * matrix[11] + matrix[15];
+ 
+	float xx, yy;
+	xx = ((vOut.x / vOut.w) * (ViewportWidth / 2.0f)) + (ViewportWidth / 2.0f);
+	yy = (ViewportHeight / 2.0f) - ((vOut.y / vOut.w) * (ViewportHeight / 2.0f));
+	
+	ModelEspInfo_t pModelEspInfo;
+	pModelEspInfo = { static_cast<float>(xx), static_cast<float>(yy), static_cast<float>(vOut.w*0.4f) };
+	ModelEspInfo.push_back(pModelEspInfo);
+	/*
 	DirectX::XMMATRIX matrix;
 	DirectX::XMVECTOR Pos = XMVectorSet(0.0f, (float)aimheight, (float)preaim, 0.0f);
 	Device->GetVertexShaderConstantF(sr, (float*)&matrix, 4);
@@ -210,7 +235,7 @@ void AddModels(LPDIRECT3DDEVICE9 Device, UINT sr)
 	ModelEspInfo_t pModelEspInfo;
 	pModelEspInfo = { static_cast<float>(xx), static_cast<float>(yy), static_cast<float>(mw*0.4f) };
 	ModelEspInfo.push_back(pModelEspInfo);
-
+	*/
 	/*
 	D3DXMATRIX matrix;
 	D3DXVECTOR4 position;

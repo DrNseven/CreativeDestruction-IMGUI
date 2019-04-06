@@ -2,19 +2,6 @@
 
 #include "main.h" //helper funcs here
 
-//imgui
-#include "imgui\imgui.h"
-#include "imgui\imgui_impl_dx9.h"
-#include "imgui\imgui_impl_win32.h"
-
-//detours
-#include "detours.X86\detours.h"
-#if defined _M_X64
-#pragma comment(lib, "detours.X64/detours.lib")
-#elif defined _M_IX86
-#pragma comment(lib, "detours.X86/detours.lib")
-#endif
-
 
 typedef HRESULT(APIENTRY *SetStreamSource)(IDirect3DDevice9*, UINT, IDirect3DVertexBuffer9*, UINT, UINT);
 SetStreamSource SetStreamSource_orig = 0;
@@ -246,7 +233,7 @@ HRESULT APIENTRY Present_hook(IDirect3DDevice9* pDevice, const RECT *pSourceRect
 		ImVec4 Bgcol = ImColor(0.0f, 0.4f, 0.28f, 0.8f); //bg color
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, Bgcol);
 		ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.2f, 0.2f, 0.2f, 0.8f)); //frame color
-		const char* lineesp_Options[] = { "Up", "Center", "Down" };
+		const char* lineesp_Options[] = { "Up", "Center", "Down", "Off" };
 		const char* aimkey_Options[] = { "Off", "Shift", "Right Mouse", "Left Mouse", "Ctrl", "Tab", "Space", "X", "C" };
 
 		ImGui::Begin("Hack Menu");
@@ -298,7 +285,7 @@ HRESULT APIENTRY Present_hook(IDirect3DDevice9* pDevice, const RECT *pSourceRect
 		{
 			for (unsigned int i = 0; i < ModelEspInfo.size(); i++)
 			{
-				if (ModelEspInfo[i].pOutX > 1.0f && ModelEspInfo[i].pOutY > 1.0f && ModelEspInfo[i].RealDistance > 13.0f)
+				if (ModelEspInfo[i].pOutX > 1.0f && ModelEspInfo[i].pOutY > 1.0f && ModelEspInfo[i].RealDistance > 14.0f)
 				{
 					//draw cricle
 					if (circleesp)
